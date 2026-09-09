@@ -215,10 +215,10 @@ with **zero infrastructure**.
     --url http://localhost:8080/url \
     --header 'content-type: application/json' \
     --data '{"url": "https://keploy.io"}'
-  # → {"ts":1788948079880273831,"url":"http://localhost:8080/7fvpSsFg"}
+  # → {"ts":1788948079880273831,"url":"http://localhost:8080/Lhr4BWAi"}
 
   # 2. Follow it back
-  curl --request GET --url http://localhost:8080/7fvpSsFg
+  curl --request GET --url http://localhost:8080/Lhr4BWAi
   ```
 
   Stop the recording with <kbd>Ctrl+C</kbd>. Keploy confirms each capture as it
@@ -230,9 +230,9 @@ with **zero infrastructure**.
    {"path": ".../keploy/test-set-0/tests", "testcase name": "post-url-1"}
 🐰 Keploy: INFO  🟠 Keploy has captured test cases for the user's application.
    {"path": ".../keploy/test-set-0/tests", "testcase name": "post-url-2"}
-[GIN]  | 303 |    1.037634ms | 127.0.0.1 | GET  "/7fvpSsFg"
+[GIN]  | 303 |    1.037634ms | 127.0.0.1 | GET  "/Lhr4BWAi"
 🐰 Keploy: INFO  🟠 Keploy has captured test cases for the user's application.
-   {"path": ".../keploy/test-set-0/tests", "testcase name": "get-7fvfssfg-1"}`}
+   {"path": ".../keploy/test-set-0/tests", "testcase name": "get-lhr4bwai-1"}`}
   </TerminalWindow>
 
   My repo now contained:
@@ -246,7 +246,7 @@ with **zero infrastructure**.
       └── tests/
           ├── post-url-1.yaml      # POST /url + assertions
           ├── post-url-2.yaml      # POST /url (second link)
-          └── get-7fvfssfg-1.yaml  # GET /:param + assertions
+          └── get-lhr4bwai-1.yaml  # GET /:param + assertions
   ```
 
   Opening one of the generated test files is worth your time:
@@ -260,7 +260,7 @@ with **zero infrastructure**.
       body: '{"url":"https://keploy.io"}'
     resp:
       status_code: 200
-      body: '{"ts":1788948079880273831,"url":"http://localhost:8080/7fvpSsFg"}'
+      body: '{"ts":1788948079880273831,"url":"http://localhost:8080/Lhr4BWAi"}'
     assertions:
       noise:
         body.ts: []
