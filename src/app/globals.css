@@ -53,6 +53,7 @@ body {
   font-size: 0.8125rem;
   line-height: 1.7;
   background-color: #0d1117;
+  color: #e6edf3;
 }
 
 [data-rehype-pretty-code-figure] code {
@@ -60,6 +61,7 @@ body {
   font-family: var(--font-mono), monospace;
   counter-reset: line;
   background: none;
+  color: inherit;
 }
 
 [data-rehype-pretty-code-figure] [data-line] {
