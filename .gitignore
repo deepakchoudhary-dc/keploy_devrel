@@ -50,3 +50,10 @@ AGENTS.md
 CLAUDE.md
 server*.log
 *.log
+
+# assessment / personal working files (never push)
+*.pdf
+*.docx
+Keploy DevRel Assessment Preparation.md
+INSTALLED.md
+NUL
