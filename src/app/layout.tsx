@@ -16,7 +16,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Zero-Mock API Testing for Go | Keploy × Gin + MongoDB Tutorial",
+  title: "Zero Handwritten Mocks: API Testing for Go | Keploy × Gin + MongoDB Tutorial",
   description:
     "A hands-on, beginner-friendly walkthrough: record real HTTP + MongoDB traffic from a Gin URL-shortener with Keploy, then replay it as a self-mocking test suite.",
 };

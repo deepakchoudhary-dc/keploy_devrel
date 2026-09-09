@@ -19,7 +19,7 @@ export default function SiteHeader() {
           </span>
           <div className="leading-tight">
             <p className="text-sm font-semibold tracking-tight">
-              Zero-Mock Testing for Go
+              Zero Handwritten Mocks, for Go
             </p>
             <p className="text-xs text-muted">
               Keploy × Gin + MongoDB — a field tutorial

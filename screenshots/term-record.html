@@ -1,0 +1,18 @@
+<!doctype html><html><head><meta charset='utf-8'><style>
+body{margin:0;background:#0d1117;font-family:'Cascadia Mono',Consolas,monospace;}
+.term{max-width:900px;padding:0;}
+.bar{background:#161b22;padding:10px 16px;border-radius:12px 12px 0 0;display:flex;gap:8px;align-items:center;}
+.dot{width:12px;height:12px;border-radius:50%;}
+.r{background:#ff5f56}.y{background:#ffbd2e}.g{background:#27c93f}
+.title{color:#8b949e;font-size:13px;margin-left:8px;}
+pre{margin:0;padding:20px 24px;color:#c9d1d9;font-size:13px;line-height:1.65;white-space:pre-wrap;border-radius:0 0 12px 12px;}
+.g{color:#3fb950;font-weight:600;}
+</style></head><body><div class='term'><div class='bar'><span class='dot r'></span><span class='dot y'></span><span class='dot g'></span><span class='title'>wsl: keploy record - gin-mongo (real session)</span></div><pre><span>🐰 Keploy(agent): 2026-09-09T10:01:10Z	[34mINFO[0m	recording start boottime set	{"ns": 42642403061}</span>
+<span>🐰 Keploy: 2026-09-09T10:01:10.795629581Z 	[34mINFO[0m	Keploy agent is ready to record test cases and mocks.</span>
+<span>🐰 Keploy: 2026-09-09T10:01:11.454939505Z 	[34mINFO[0m	Starting Application :	{"executing_cmd": "/usr/bin/sh -c docker run --pid=container:keploy-v3-b1d9 --network=container:keploy-v3-b1d9 -v keploy-tls-certs:/tmp/keploy-tls:ro -e NODE_EXTRA_CA_CERTS=/tmp/keploy-tls/ca.crt -e REQUESTS_CA_BUNDLE=/tmp/keploy-tls/ca.crt -e SSL_CERT_FILE=/tmp/keploy-tls/ca.crt -e CARGO_HTTP_CAINFO=/tmp/keploy-tls/ca.crt -e JAVA_TOOL_OPTIONS='-Djavax.net.ssl.trustStore=/tmp/keploy-tls/truststore.jks -Djavax.net.ssl.trustStorePassword=changeit'  --rm --name MongoApp  gin-app:1.0"}</span>
+<span>[GIN] 2026/09/09 - 10:01:19 | 200 |  368.319165ms |       127.0.0.1 | POST     "/url"</span>
+<span>[GIN] 2026/09/09 - 10:01:19 | 200 |     975.774µs |       127.0.0.1 | POST     "/url"</span>
+<span>🐰 Keploy: 2026-09-09T10:01:19.911302775Z 	[34mINFO[0m	🟠 Keploy has captured test cases for the user's application.	{"path": "/mnt/f/Keploy/samples-go/gin-mongo/keploy/test-set-0/tests", "testcase name": "post-url-1"}</span>
+<span>🐰 Keploy: 2026-09-09T10:01:19.93768516Z 	[34mINFO[0m	🟠 Keploy has captured test cases for the user's application.	{"path": "/mnt/f/Keploy/samples-go/gin-mongo/keploy/test-set-0/tests", "testcase name": "post-url-2"}</span>
+<span>[GIN] 2026/09/09 - 10:01:19 | 303 |    1.037634ms |       127.0.0.1 | GET      "/Lhr4BWAi"</span>
+<span>🐰 Keploy: 2026-09-09T10:01:19.964232134Z 	[34mINFO[0m	🟠 Keploy has captured test cases for the user's application.	{"path": "/mnt/f/Keploy/samples-go/gin-mongo/keploy/test-set-0/tests", "testcase name": "get-lhr4bwai-1"}</span></pre></div></body></html>
