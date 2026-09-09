@@ -1,0 +1,362 @@
+import Callout from "@/components/Callout";
+import OsTabs from "@/components/OsTabs";
+import ArchitectureDiagram from "@/components/ArchitectureDiagram";
+import StepCard from "@/components/StepCard";
+import TerminalWindow from "@/components/TerminalWindow";
+
+<div className="not-prose mb-10 rounded-2xl border border-border bg-card p-6 sm:p-8">
+  <p className="text-sm font-semibold uppercase tracking-widest text-violet-600 dark:text-violet-400">
+    {"Hands-on tutorial"}
+  </p>
+  <h1 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">
+    {"From zero to a self-mocking Go test suite with Keploy"}
+  </h1>
+  <p className="mt-4 text-[15px] leading-7 text-muted">
+    {"I took a real Gin + MongoDB URL shortener, pointed Keploy at it, and let it record my API calls into a replayable test suite — no hand-written mocks, no test fixtures, no Postman collections to maintain. This is the exact path I followed, including the mistakes that tripped me and how to avoid them."}
+  </p>
+  <div className="mt-6 flex flex-wrap gap-2 text-xs font-medium">
+    <span className="rounded-full bg-violet-500/15 px-3 py-1 text-violet-700 dark:text-violet-300">Go</span>
+    <span className="rounded-full bg-emerald-500/15 px-3 py-1 text-emerald-700 dark:text-emerald-300">Gin</span>
+    <span className="rounded-full bg-amber-500/15 px-3 py-1 text-amber-700 dark:text-amber-300">MongoDB</span>
+    <span className="rounded-full bg-sky-500/15 px-3 py-1 text-sky-700 dark:text-sky-300">Keploy CLI</span>
+    <span className="rounded-full bg-fuchsia-500/15 px-3 py-1 text-fuchsia-700 dark:text-fuchsia-300">Docker</span>
+  </div>
+</div>
+
+## Why this matters (the 60-second pitch)
+
+Every Go service with a database has the same testing problem: **your tests are
+only as real as their dependencies**. Unit tests with hand-written mocks lie to
+you — they encode what you *assume* Mongo returns, not what it actually returns.
+Integration tests with a live database are truthful but heavy: fixtures, state
+cleanup, flaky environments.
+
+Keploy takes a third path, and it's genuinely clever:
+
+<ArchitectureDiagram />
+
+1. **Record mode** — Keploy hooks the network layer with eBPF and silently
+   records every HTTP call *and* every MongoDB round-trip while you click
+   around your app normally.
+2. **Test mode** — it replays those calls against a fresh instance of your app,
+   but intercepts the outbound traffic and answers it with the *recorded*
+   responses. Your app genuinely believes it's talking to MongoDB.
+
+The payoff: a test suite that behaves like an integration suite but runs like a
+unit test suite — no database required.
+
+<Callout type="tip" title="Who is this for?">
+  If you've ever written a Go handler test with a mocked repository interface
+  and thought *"this only proves my mock works"*, this workflow is for you. You
+  need basic comfort with a terminal and Docker; no prior Keploy knowledge
+  assumed — that was me an hour before writing this.
+</Callout>
+
+## What you'll build
+
+A URL shortener service (the official Keploy sample) with two endpoints:
+
+| Endpoint | What it does |
+| --- | --- |
+| `POST /url` | Accepts `{"url": "..."}` and returns a shortened link |
+| `GET /:param` | Redirects a short link back to the original URL |
+
+By the end, you'll have a `keploy/` folder in your repo containing recorded
+test cases and Mongo mocks, and a green test run you can re-execute any time —
+with **zero infrastructure**.
+
+## Prerequisites
+
+- **A Linux or WSL2 environment** (Keploy uses eBPF; the kernel must be
+  ≥ 5.10). On Windows, WSL2 is the way — check yours with `uname -r`.
+- **Docker** running (`docker ps` should work).
+- **Go 1.22+** only if you run the app natively; the Docker path builds it for you.
+
+<OsTabs
+  tabs={[
+    {
+      label: "Windows (WSL2)",
+      content: (
+        <ol className="list-decimal space-y-2 pl-5 text-sm leading-6">
+          <li>Install WSL2: <code className="rounded bg-foreground/10 px-1.5 py-0.5 font-mono text-[0.85em]">wsl --install</code> from an admin PowerShell, then reboot.</li>
+          <li>Inside Ubuntu, install Docker Engine (<code className="rounded bg-foreground/10 px-1.5 py-0.5 font-mono text-[0.85em]">sudo apt install docker.io docker-compose-v2</code>) and start the daemon.</li>
+          <li>Verify the kernel: <code className="rounded bg-foreground/10 px-1.5 py-0.5 font-mono text-[0.85em]">uname -r</code> must print 5.10 or higher.</li>
+        </ol>
+      ),
+    },
+    {
+      label: "Linux",
+      content: (
+        <ol className="list-decimal space-y-2 pl-5 text-sm leading-6">
+          <li>Install Docker Engine from the official docs or your distro's packages.</li>
+          <li>Check <code className="rounded bg-foreground/10 px-1.5 py-0.5 font-mono text-[0.85em]">uname -r</code> ≥ 5.10.</li>
+          <li>That's it — you can run everything natively.</li>
+        </ol>
+      ),
+    },
+    {
+      label: "macOS",
+      content: (
+        <p className="text-sm leading-6">
+          Run Keploy through Docker Desktop (version 4.25.2 or newer). The
+          commands below are identical; just prefix with{" "}
+          <code className="rounded bg-foreground/10 px-1.5 py-0.5 font-mono text-[0.85em]">docker exec</code>{" "}
+          or use a Linux VM as described in Keploy's macOS guide.
+        </p>
+      ),
+    },
+  ]}
+/>
+
+<Callout type="warn" title="The one gotcha I hit">
+  eBPF-based tooling only works where the kernel is Linux. Running these
+  commands in PowerShell or macOS directly will not work — WSL2 (Windows) or a
+  Linux box (native/Docker) is required. I ran everything inside Ubuntu 24.04
+  on WSL2 with kernel 6.18.
+</Callout>
+
+<StepCard n={1} title="Install the Keploy CLI">
+  One command, straight from the docs:
+
+  ```bash
+  curl --silent -O -L https://keploy.io/install.sh && source install.sh
+  ```
+
+  Then prove it works:
+
+  ```bash
+  keploy --version
+  ```
+
+  <Callout type="info" title="What just happened?">
+    The installer drops a single binary into{" "}
+    <code className="rounded bg-foreground/10 px-1 py-0.5 font-mono text-[0.85em]">/usr/local/bin/keploy</code>.
+    When you run it, Keploy launches an agent (as its own container or process)
+    that loads eBPF probes into the kernel — that is the piece that watches your
+    app's network traffic.
+  </Callout>
+</StepCard>
+
+<StepCard n={2} title="Get the sample app">
+  Clone the official Go samples and enter the Gin + MongoDB project:
+
+  ```bash
+  git clone https://github.com/keploy/samples-go.git
+  cd samples-go/gin-mongo
+  ```
+
+  <Callout type="warn" title="One thing I wish I'd known">
+    The sample repo ships with a <em>pre-recorded</em>{" "}
+    <code className="rounded bg-foreground/10 px-1 py-0.5 font-mono text-[0.85em]">keploy/</code>{" "}
+    folder from the maintainers. Delete it before your own session
+    (<code className="rounded bg-foreground/10 px-1 py-0.5 font-mono text-[0.85em]">rm -rf keploy</code>)
+    so every artifact captured is unmistakably yours. I recorded my first
+    attempt on top of it and spent a confused minute wondering why the generated
+    YAML was dated 2024.
+  </Callout>
+
+  The app is deliberately simple — a handler that hashes a URL into an
+  8-character ID and upserts it into Mongo:
+
+  ```go
+  func GenerateShortLink(initialLink string) string {
+      urlHashBytes := sha256Of(initialLink)
+      generatedNumber := new(big.Int).SetBytes(urlHashBytes).Uint64()
+      finalString := base58Encoded([]byte(fmt.Sprintf("%d", generatedNumber)))
+      return finalString[:8]
+  }
+  ```
+</StepCard>
+
+<StepCard n={3} title="Start MongoDB on the Keploy network">
+  Keploy uses a docker network named <code>keploy-network</code>; put the
+  database on it so both sides can talk:
+
+  ```bash
+  docker network create keploy-network
+  docker run -p 27017:27017 -d --network keploy-network --name mongoDb mongo
+  ```
+</StepCard>
+
+<StepCard n={4} title="Record your first test cases">
+  Build the app image, then wrap its startup in <code>keploy record</code>:
+
+  ```bash
+  docker build -t gin-app:1.0 .
+  keploy record -c "docker run -p 8080:8080 --name MongoApp --network keploy-network gin-app:1.0"
+  ```
+
+  Keploy starts your app inside its observation layer — DNS, TLS and network
+  traffic all route through it. Here is the real startup sequence from my run:
+
+  <TerminalWindow title="keploy record — startup">
+{`🐰 Keploy(agent): INFO  starting UDP DNS server at addr :26789
+🐰 Keploy(agent): INFO  starting TCP DNS server at addr :26789
+🐰 Keploy: INFO  Keploy has taken control of the DNS resolution mechanism,
+   your application may misbehave if you have provided wrong domain name
+   in your application code.
+🐰 Keploy(agent): INFO  Proxy started at port:16789
+🐰 Keploy: INFO  Keploy agent is ready to record test cases and mocks.`}
+  </TerminalWindow>
+
+  <Callout type="warn" title="Be patient on the first run">
+    The first <code>keploy record</code> pulls Keploy's agent image
+    (<code>ghcr.io/keploy/keploy</code>) before the app becomes reachable —
+    mine took ~30 extra seconds. My first attempt "failed" simply because I
+    curled before the app was up. Poll until you get a <code>200</code> from{" "}
+    <code>POST /url</code> before making your real calls.
+  </Callout>
+
+  While it's recording, use the app exactly as a real client would:
+
+  ```bash
+  # 1. Create a short link
+  curl --request POST \
+    --url http://localhost:8080/url \
+    --header 'content-type: application/json' \
+    --data '{"url": "https://keploy.io"}'
+  # → {"ts":1788948079880273831,"url":"http://localhost:8080/7fvpSsFg"}
+
+  # 2. Follow it back
+  curl --request GET --url http://localhost:8080/7fvpSsFg
+  ```
+
+  Stop the recording with <kbd>Ctrl+C</kbd>. Keploy confirms each capture as it
+  happens — this is the actual output from my session:
+
+  <TerminalWindow title="keploy record — captured test cases">
+{`[GIN]  | 200 |  368.319165ms | 127.0.0.1 | POST "/url"
+🐰 Keploy: INFO  🟠 Keploy has captured test cases for the user's application.
+   {"path": ".../keploy/test-set-0/tests", "testcase name": "post-url-1"}
+🐰 Keploy: INFO  🟠 Keploy has captured test cases for the user's application.
+   {"path": ".../keploy/test-set-0/tests", "testcase name": "post-url-2"}
+[GIN]  | 303 |    1.037634ms | 127.0.0.1 | GET  "/7fvpSsFg"
+🐰 Keploy: INFO  🟠 Keploy has captured test cases for the user's application.
+   {"path": ".../keploy/test-set-0/tests", "testcase name": "get-7fvfssfg-1"}`}
+  </TerminalWindow>
+
+  My repo now contained:
+
+  ```text
+  keploy/
+  └── test-set-0/
+      ├── mocks.yaml
+      │     ├── mock-0..1  (kind: DNS)
+      │     └── mock-2+    (kind: Mongo — real wire protocol)
+      └── tests/
+          ├── post-url-1.yaml      # POST /url + assertions
+          ├── post-url-2.yaml      # POST /url (second link)
+          └── get-7fvfssfg-1.yaml  # GET /:param + assertions
+  ```
+
+  Opening one of the generated test files is worth your time:
+
+  ```yaml
+  name: post-url-1
+  spec:
+    req:
+      method: POST
+      url: http://localhost:8080/url
+      body: '{"url":"https://keploy.io"}'
+    resp:
+      status_code: 200
+      body: '{"ts":1788948079880273831,"url":"http://localhost:8080/7fvpSsFg"}'
+    assertions:
+      noise:
+        body.ts: []
+        header.Date: []
+  ```
+
+  <Callout type="success" title="My a-ha moment">
+    Opening <code>mocks.yaml</code> was the moment Keploy clicked for me: the
+    exact MongoDB wire messages — <code>isMaster</code> handshakes, driver
+    metadata (<code>mongo-go-driver v1.8.1</code>), collection commands and
+    their responses — were all captured as real <code>kind: Mongo</code> mocks.
+    That's not "a tool that generates tests"; that's a tool that cloned my
+    database's behavior at the protocol level.
+  </Callout>
+</StepCard>
+
+<StepCard n={5} title="Replay with zero infrastructure">
+  Now the payoff command:
+
+  ```bash
+  keploy test -c "docker run -p 8080:8080 --net keploy-network --name ginMongoApp gin-app:1.0" --delay 10
+  ```
+
+  Notice what's missing: **no Mongo container needed**. Keploy intercepts the
+  app's outbound connections and answers them from the recorded mocks. The real
+  summary from my run:
+
+  <TerminalWindow title="keploy test — results">
+{` <=========================================> 
+  TESTRUN SUMMARY. For test-set: "test-set-0"
+        Total tests:        3
+        Total test passed:  3
+        Total test failed:  0
+        Time Taken:         10.24 s
+ <=========================================> 
+
+  COMPLETE TESTRUN SUMMARY. 
+        Total tests: 3
+        Total test passed: 3
+        Total test failed: 0
+
+        Test Suite Name      Total Test   Passed   Failed   Time Taken
+        "test-set-0"         3            3        0        "10.24 s"
+
+🐰 Keploy: INFO  stopping Keploy {"reason": "replay completed successfully"}`}
+  </TerminalWindow>
+
+  Keploy also writes a machine-readable report for your CI to parse:
+
+  ```text
+  keploy/reports/test-run-<n>/test-set-0-report.yaml
+  ```
+
+  <Callout type="tip" title="About noise fields (already handled here)">
+    Deterministic tests are useful tests. Notice the <code>noise</code> block
+    in the generated YAML — newer Keploy versions auto-populate{" "}
+    <code>body.ts</code> and <code>header.Date</code> because timestamps change
+    on every response. If a volatile field ever fails your replay, add it
+    there: "assert everything about this response <em>except</em> these
+    fields."
+  </Callout>
+</StepCard>
+
+<StepCard n={6} title="Make it part of your workflow">
+  Because the whole suite lives in your repo as YAML:
+
+  - **CI** — run `keploy test` in your pipeline; no services to spin up.
+  - **Review** — a PR that changes Mongo queries shows up as a mock diff.
+  - **Onboarding** — new teammates replay the suite before reading a line of code.
+</StepCard>
+
+## What I'd tell a teammate before they start
+
+1. **Run it inside Linux/WSL2 from the start** — Keploy's eBPF hooks are the
+   whole product; everything else follows from that.
+2. **Delete the sample repo's shipped `keploy/` folder first**, or you'll mix
+   someone else's recordings with yours (learned the hard way).
+3. **Wait for the app to actually come up** before your first curl — the agent
+   image pull delays the first `keploy record` run.
+4. **Record honestly.** The suite is only as good as the traffic you capture —
+   include error paths, not just the happy path.
+5. **Commit the `keploy/` folder.** It's your regression safety net.
+
+## Wrapping up
+
+From clone to a green, dependency-free test suite in one sitting: `keploy
+record` while I used the API normally — 3 test cases and a full set of Mongo +
+DNS mocks captured — then `keploy test` replayed everything with **3/3 passing
+and no database running**. The eBPF approach means the tests reflect what my
+app *actually* does, not what my mocks assume it does. For a Go developer,
+that's the difference between testing the code you wrote and testing the
+behavior you shipped.
+
+<Callout type="info" title="Try it with your own app">
+  The commands here are not Gin-specific. If your Go service speaks HTTP and
+  talks to a database over TCP, the same record → test loop applies. Start with
+  the <a href="https://keploy.io/docs/quickstart/">official quickstarts</a> and
+  swap in your own <code>keploy record -c "..."</code> command.
+</Callout>

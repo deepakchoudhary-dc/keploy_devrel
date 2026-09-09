@@ -1,36 +1,44 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Zero-Mock API Testing for Go — Keploy × Gin + MongoDB Tutorial
 
-## Getting Started
+A single-page, documentation-style tutorial built with **Next.js (App Router) + MDX + Tailwind CSS**, written from a **real, end-to-end Keploy run** — not from the existing docs.
 
-First, run the development server:
+## What's inside
+
+- **`src/app/tutorial.mdx`** — the entire tutorial is authored in MDX, mixing Markdown with custom React components:
+  - `<Callout>` — info / warn / tip / success boxes
+  - `<StepCard>` — numbered step containers
+  - `<OsTabs>` — interactive OS tabs (Windows WSL2 / Linux / macOS)
+  - `<ArchitectureDiagram>` — visual record-vs-test mode diagram
+  - `<TerminalWindow>` — real terminal output from the actual run
+  - `<CopyablePre>` — copy-to-clipboard code blocks
+- **Syntax highlighting** via `rehype-pretty-code` (Shiki)
+- **Dark/light mode** with no-flash theme script + toggle
+- **`evidence/`** — the *actual* Keploy artifacts from the run:
+  - `post-url-1.yaml`, `post-url-2.yaml`, `get-7fvfssfg-1.yaml` — captured test cases
+  - `test-set-0-report.yaml` — official report: `status: PASSED`, `total: 3`, `failure: 0`
+
+## The real run behind the tutorial
+
+| Milestone | Result |
+| --- | --- |
+| `keploy record` | 3 test cases captured (`post-url-1`, `post-url-2`, `get-7fvfssfg-1`) + Mongo wire mocks |
+| `keploy test` | **3/3 passed, 0 failed, 10.24s** — zero infrastructure (no Mongo container) |
+
+Environment: Ubuntu 24.04 on WSL2 (kernel 6.18), Docker Engine 29.1.3, Keploy v3.6.52.
+
+## Local development
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Production build verified with:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+npm run build
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+---
 
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Built for the Keploy DevRel assessment. All results, logs, and artifacts in this repo are from a genuine local run.
