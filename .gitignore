@@ -44,3 +44,9 @@ next-env.d.ts
 *.txt.log
 build-*.txt
 server.log
+
+# tooling artifacts
+AGENTS.md
+CLAUDE.md
+server*.log
+*.log
