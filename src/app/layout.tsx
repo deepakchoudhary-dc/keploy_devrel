@@ -39,7 +39,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           Built for the Keploy DevRel assessment · Next.js + MDX + Tailwind ·
           Content authored in{" "}
           <code className="rounded bg-foreground/10 px-1.5 py-0.5 font-mono text-[0.85em]">
-            page.mdx
+            tutorial.mdx
           </code>
         </footer>
       </body>
